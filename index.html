@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.sandbox.google.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background-color: #000;
+        margin: 0;
+        color: #fff;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        font-family: 'Press Start 2P', cursive;
+        overflow: hidden;
+      }
+      main {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        max-height: calc(100vw / 1.77);
+      }
+      #divider {
+        border: #fff 2px dashed;
+        height: 100%;
+      }
+      .score {
+        flex: 1;
+        text-align: center;
+        font-size: 3em;
+        display: flex;
+        flex-direction: column;
+      }
+      .score small {
+        font-size: 1rem;
+      }
+      .player {
+        background-color: #fff;
+        width: 1%;
+        height: 10%;
+        position: absolute;
+        top: calc(50% - calc(10% / 2));
+      }
+      #player-1 {
+        left: 5%;
+      }
+      #player-2 {
+        right: 5%;
+      }
+      #ball {
+        background-color: #fff;
+        width: 2%;
+        height: calc(2% * 1.77);
+        position: absolute;
+        top: calc(50% - calc(calc(2% * 1.77) / 2));
+        left: calc(50% - calc(2% / 2));
+      }
+      .overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+      .overlay h1 {
+        font-size: 6em;
+      }
+      .overlay button {
+        background-color: rgba(0, 0, 0, 0.8);
+        border: #fff 2px solid;
+        color: #fff;
+        padding: 2% 5%;
+        font-size: 2em;
+      }
+      .overlay button:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+      }
+      .overlay button:active {
+        background-color: rgba(255, 255, 255, 0.75);
+        color: #000;
+      }
+      #start {
+        display: flex;
+      }
+      nav {
+        position: fixed;
+        top: 0;
+        right: 0;
+        padding: 10px;
+        z-index: 2;
+      }
+      nav button {
+        background-color: rgba(0, 0, 0, 0.8);
+        border: #fff 2px solid;
+        color: #fff;
+      }
+      #options {
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 2;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        margin: 10%;
+      }
+      .field label {
+        font-size: 0.9rem;
+      }
+      input {
+        background-color: #000;
+        border: #fff 1px solid;
+        padding: 10px;
+        color: #fff;
+        font-family: 'Press Start 2P', cursive;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav>
+        <button id="btn-options">
+          <span class="material-symbols-outlined"> settings </span>
+        </button>
+        <button id="btn-audio">
+          <span class="material-symbols-outlined"> volume_up </span>
+        </button>
+      </nav>
+      <div class="overlay" id="options">
+        <form>
+          <div class="field">
+            <label>Total de Pontos</label>
+            <input type="number" min="0" max="99" id="winGame" value="3" />
+          </div>
+          <div class="field">
+            <label>Volume da Múscia</label>
+            <input
+              type="range"
+              min="0"
+              step="0.01"
+              max="1"
+              id="volumeMusic"
+              value="1"
+            />
+          </div>
+          <div class="field">
+            <label>Volume dos Efeitos</label>
+            <input
+              type="range"
+              min="0"
+              step="0.01"
+              max="1"
+              id="volumeAudio"
+              value="1"
+            />
+          </div>
+          <button type="button">Close</button>
+        </form>
+      </div>
+      <div class="overlay" id="game-over">
+        <h1>GAME OVER</h1>
+      </div>
+      <div class="overlay" id="start">
+        <button>Start</button>
+      </div>
+      <div id="score-1" class="score">
+        <span>0</span>
+        <small>Player 1</small>
+      </div>
+      <div id="divider"></div>
+      <div id="score-2" class="score">
+        <span>0</span>
+        <small>Player 2</small>
+      </div>
+      <div id="player-1" class="player"></div>
+      <div id="player-2" class="player"></div>
+      <div id="ball"></div>
+    </main>
+    <script>
+      const game = {
+        gameOverOverlay: document.querySelector('#game-over'),
+        gameStartOverlay: document.querySelector('#start'),
+        gameOptionsOverlay: document.querySelector('#options'),
+        player1: document.querySelector('#player-1'),
+        player1Y: 50,
+        player2: document.querySelector('#player-2'),
+        player2Y: 50,
+        playerHeight: 10,
+        playerSpeed: 5,
+        ball: document.querySelector('#ball'),
+        ballX: 50,
+        ballY: 50,
+        ballLeft: Math.random() > 0.5 ? true : false,
+        ballTop: Math.random() > 0.5 ? true : false,
+        ballHeight: 2,
+        ballSpeed: 0.1,
+        score1: document.querySelector('#score-1 span'),
+        score2: document.querySelector('#score-2 span'),
+        winGame: 3,
+        gameOver: false,
+        audio: true,
+        btnAudio: document.querySelector('#btn-audio'),
+        music: new Audio('music.mp3'),
+        volumeMusic: 1,
+        volumeAudio: 1,
+      };
+
+      function playAudio(id = 1) {
+        if (game.audio) {
+          const audio = new Audio('audio.mp3');
+
+          audio.volume = game.volumeAudio;
+
+          switch (id) {
+            case 1:
+              audio.currentTime = 0.5;
+              break;
+            case 2:
+              audio.currentTime = 1.5;
+              break;
+            case 3:
+              audio.currentTime = 2.5;
+              break;
+          }
+
+          audio.play();
+
+          setTimeout(() => audio.pause(), 500);
+        }
+      }
+
+      function gameOver() {
+        game.gameOver = true;
+        game.gameOverOverlay.style.display = 'flex';
+        setTimeout(() => {
+          game.gameOverOverlay.style.display = 'none';
+          game.gameStartOverlay.style.display = 'flex';
+        }, 3000);
+      }
+
+      function point(player) {
+        playAudio(3);
+
+        const value = Number(player.innerHTML) + 1;
+        player.innerHTML = value;
+
+        if (value >= game.winGame) {
+          gameOver();
+        }
+
+        resetGame();
+      }
+
+      function setBallPosition() {
+        game.ball.style.left = `calc(${game.ballX}% - calc(20px / 2))`;
+        game.ball.style.top = `calc(${game.ballY}% - calc(20px / 2))`;
+      }
+
+      function resetGame() {
+        game.playerSpeed = 5;
+        game.ballX = 50;
+        game.ballY = 50;
+        game.ballLeft = Math.random() > 0.5 ? true : false;
+        game.ballTop = Math.random() > 0.5 ? true : false;
+        game.ballSpeed = 0.1;
+        setBallPosition();
+      }
+
+      function gameLoop() {
+        console.log(game.winGame, game.volumeAudio, game.volumeMusic);
+
+        // Verifica se a bola esta indo para esquerda ou direita
+        if (game.ballLeft) {
+          game.ballX -= game.ballSpeed;
+        } else {
+          game.ballX += game.ballSpeed;
+        }
+
+        // Verifica se a bola esta indo para cima ou baixo
+        if (game.ballTop) {
+          game.ballY -= game.ballSpeed;
+        } else {
+          game.ballY += game.ballSpeed;
+        }
+
+        // Verifica se a bola bateu em cima
+        if (game.ballY <= 0) {
+          game.ballTop = false;
+          playAudio(2);
+        }
+
+        // Verifica se a bola bateu em baixo
+        if (game.ballY >= 100) {
+          game.ballTop = true;
+          playAudio(2);
+        }
+
+        // Verifica se a bola bateu na direita
+        if (game.ballX >= 100) {
+          game.ballLeft = true;
+          playAudio(2);
+        }
+
+        // Verifica se a bola bateu na esquerda
+        if (game.ballX <= 0) {
+          game.ballLeft = false;
+          playAudio(2);
+        }
+
+        const ballTop = game.ballY;
+        const ballBottom = game.ballY + game.ballHeight;
+
+        //Verifica se a bola chegou no jogador 1
+        if (game.ballLeft && parseInt(game.ballX) === 7) {
+          // Verifica se a bola bateu no jogador 1
+          const player1Top = game.player1Y - game.playerHeight / 2;
+          const player1Bottom = game.player1Y + game.playerHeight / 2;
+
+          if (player1Top <= ballTop && player1Bottom >= ballBottom) {
+            playAudio(1);
+            game.ballLeft = !game.ballLeft;
+            game.ballSpeed += 0.02;
+          }
+        }
+
+        //Se o jogador 1 errar, ponto para o jogador 2
+        if (game.ballLeft && parseInt(game.ballX) === 0) {
+          point(game.score2);
+        }
+
+        //Verifica se a bola chegou no jogador 2
+        if (!game.ballLeft && parseInt(game.ballX) === 93) {
+          // Verifica se a bola bateu no jogador 2
+          const player2Top = game.player2Y - game.playerHeight / 2;
+          const player2Bottom = game.player2Y + game.playerHeight / 2;
+
+          if (player2Top <= ballTop && player2Bottom >= ballBottom) {
+            playAudio(1);
+            game.ballLeft = !game.ballLeft;
+            game.ballSpeed += 0.02;
+          }
+        }
+
+        //Se o jogador 2 errar, ponto para o jogador 1
+        if (game.ballLeft && parseInt(game.ballX) === 100) {
+          point(game.score1);
+        }
+
+        // Atualiza a posição da bola via CSS na tela
+        setBallPosition();
+
+        if (!game.gameOver) {
+          setTimeout(gameLoop, 1000 / 144);
+        }
+      }
+
+      function setPlayerY(player, y) {
+        player.style.top = `calc(${y}% - calc(10% / 2))`;
+      }
+
+      window.addEventListener('keyup', (event) => {
+        switch (event.key) {
+          case 'w':
+            game.player1Y -= game.playerSpeed;
+
+            if (game.player1Y <= 0) {
+              game.player1Y = 0;
+            }
+
+            setPlayerY(game.player1, game.player1Y);
+            break;
+          case 's':
+            game.player1Y += game.playerSpeed;
+
+            if (game.player1Y >= 100) {
+              game.player1Y = 100;
+            }
+
+            setPlayerY(game.player1, game.player1Y);
+            break;
+          case 'ArrowUp':
+            game.player2Y -= game.playerSpeed;
+
+            if (game.player2Y <= 0) {
+              game.player2Y = 0;
+            }
+
+            setPlayerY(game.player2, game.player2Y);
+            break;
+          case 'ArrowDown':
+            game.player2Y += game.playerSpeed;
+
+            if (game.player2Y >= 100) {
+              game.player2Y = 100;
+            }
+
+            setPlayerY(game.player2, game.player2Y);
+            break;
+        }
+      });
+
+      game.gameStartOverlay
+        .querySelector('button')
+        .addEventListener('click', () => {
+          game.gameStartOverlay.style.display = 'none';
+          game.gameOver = false;
+          game.music.play();
+          gameLoop();
+        });
+
+      game.btnAudio.addEventListener('click', () => {
+        game.audio = !game.audio;
+        if (game.audio) {
+          game.btnAudio.querySelector('span').innerHTML = 'volume_up';
+          game.music.play();
+        } else {
+          game.btnAudio.querySelector('span').innerHTML = 'volume_off';
+          game.music.pause();
+        }
+      });
+
+      document.querySelector('#winGame').addEventListener('change', (event) => {
+        game.winGame = Number(event.target.value);
+        console.log(game);
+      });
+
+      document
+        .querySelector('#volumeMusic')
+        .addEventListener('change', (event) => {
+          game.volumeMusic = Number(event.target.value);
+          game.music.volume = game.volumeMusic;
+        });
+
+      document
+        .querySelector('#volumeAudio')
+        .addEventListener('change', (event) => {
+          game.volumeAudio = Number(event.target.value);
+        });
+
+      game.gameOptionsOverlay
+        .querySelector('button')
+        .addEventListener('click', () => {
+          game.gameOptionsOverlay.style.display = 'none';
+        });
+
+      document.querySelector('#btn-options').addEventListener('click', () => {
+        game.gameOptionsOverlay.style.display = 'flex';
+      });
+    </script>
+  </body>
+</html>
