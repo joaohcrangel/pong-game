@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.sandbox.google.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <div id="overlay">
+        <button id="btn-start">Start</button>
+      </div>
+      <div id="score-1" class="score">
+        <span>0</span><small>Player 1</small>
+      </div>
+      <div class="divider"></div>
+      <div id="score-2" class="score">
+        <span>0</span><small>Player 2</small>
+      </div>
+      <div id="player-1" class="player" data-value="50"></div>
+      <div id="player-2" class="player" data-value="50"></div>
+      <div id="ball" data-x="50" data-y="50"></div>
+    </main>
+    <audio src="audio.mp3" />
+    <script>
+      const game = {
+        overlay: document.querySelector('#overlay'),
+        buttonStart: document.querySelector('#btn-start'),
+        audio: document.querySelector('audio'),
+        playerName: 'Player 1', // prompt('Qual o seu nome?', 'Player 1'),
+        player1: document.querySelector('#player-1'),
+        player2: document.querySelector('#player-2'),
+        playerMove: 5,
+        ball: document.querySelector('#ball'),
+        score1: document.querySelector('#score-1 span'),
+        score2: document.querySelector('#score-2 span'),
+        speed: 0.1,
+        speedUp: 0.02,
+        intervalSpeed: null,
+        left: Math.random() < 0.5,
+        top: Math.random() < 0.5,
+        gameOver: false,
+        gameWin: 3,
+      };
+
+      function playAudio(track = 1) {
+        if (game.audio.paused) {
+          switch (track) {
+            case 1:
+              game.audio.currentTime = 0.5;
+              game.audio.play();
+              setTimeout(() => {
+                game.audio.pause();
+                game.audio.currentTime = 0;
+              }, 600);
+              break;
+            case 2:
+              game.audio.currentTime = 1.5;
+              game.audio.play();
+              setTimeout(() => {
+                game.audio.pause();
+                game.audio.currentTime = 0;
+              }, 600);
+              break;
+            case 3:
+              game.audio.currentTime = 2.5;
+              game.audio.play();
+              setTimeout(() => {
+                game.audio.pause();
+                game.audio.currentTime = 0;
+              }, 600);
+              break;
+          }
+        }
+      }
+
+      function gameOver() {
+        game.overlay.style.display = 'flex';
+        game.gameOver = true;
+      }
+
+      function point(score) {
+        playAudio(3);
+
+        let value = Number(score.innerHTML) + 1;
+        score.innerHTML = value;
+        game.left = Math.random() < 0.5;
+        game.top = Math.random() < 0.5;
+        game.ball.dataset.y = 50;
+        game.ball.style.top = `calc(${50}% - 10px)`;
+        game.ball.dataset.x = 50;
+        game.ball.style.left = `calc(${50}% - 10px)`;
+        game.speed = 0.1;
+
+        if (value >= game.gameWin) {
+          gameOver();
+        }
+      }
+
+      function gameLoop() {
+        const player1 = Number(game.player1.dataset.value);
+        const player2 = Number(game.player2.dataset.value);
+        const ballX = parseInt(game.ball.dataset.x);
+        const ballY = parseInt(game.ball.dataset.y);
+
+        ////////////////////////////////////////////////////////
+        // Player 1
+        if (!game.left && ballX === 0) {
+          point(game.score2);
+        }
+
+        if (!game.left && ballX === 5) {
+          if (ballY >= player1 && ballY <= player1 + 10) {
+            playAudio(1);
+            game.left = !game.left;
+          }
+        }
+        ////////////////////////////////////////////////////////
+        // Player 2
+
+        if (game.left && ballX === 99) {
+          point(game.score1);
+        }
+
+        if (game.left && ballX === 93) {
+          if (ballY >= player2 && ballY <= player2 + 10) {
+            playAudio(1);
+            game.left = !game.left;
+          }
+        }
+        ////////////////////////////////////////////////////////
+        // Ball
+        const y = Number(game.ball.dataset.y);
+        let newY = y;
+        if (game.top) {
+          newY = y + game.speed;
+          if (newY >= 100) {
+            playAudio(2);
+            newY = 100;
+            game.top = !game.top;
+            game.speed += game.speedUp;
+          }
+          game.ball.dataset.y = newY;
+          game.ball.style.top = `calc(${newY}% - 10px)`;
+        } else {
+          newY = y - game.speed;
+          if (newY <= 0) {
+            playAudio(2);
+            newY = 0;
+            game.top = !game.top;
+            game.speed += game.speedUp;
+          }
+          game.ball.dataset.y = newY;
+          game.ball.style.top = `calc(${newY}% - 10px)`;
+        }
+
+        const x = Number(game.ball.dataset.x);
+        let newX = x;
+        if (game.left) {
+          newX = x + game.speed;
+          if (newX >= 100) {
+            playAudio(2);
+            newX = 100;
+            game.left = !game.left;
+            game.speed += game.speedUp;
+          }
+          game.ball.dataset.x = newX;
+          game.ball.style.left = `calc(${newX}% - 10px)`;
+        } else {
+          newX = x - game.speed;
+          if (newX <= 0) {
+            playAudio(2);
+            newX = 0;
+            game.left = !game.left;
+            game.speed += game.speedUp;
+          }
+          game.ball.dataset.x = newX;
+          game.ball.style.left = `calc(${newX}% - 10px)`;
+        }
+
+        if (!game.gameOver) {
+          setTimeout(gameLoop, 5);
+        }
+      }
+
+      game.buttonStart.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        gameLoop();
+      });
+
+      window.addEventListener('keyup', (event) => {
+        let value = 0;
+        let newValue = 0;
+        switch (event.key) {
+          case 'ArrowUp':
+            value = Number(game.player1.dataset.value);
+            newValue = value - game.playerMove;
+            if (newValue < 0) {
+              newValue = 0;
+            }
+            game.player1.dataset.value = newValue;
+            game.player1.style.top = `${newValue}%`;
+            break;
+          case 'ArrowDown':
+            value = Number(game.player1.dataset.value);
+            newValue = value + game.playerMove;
+            if (newValue > 100) {
+              newValue = 100;
+            }
+            game.player1.dataset.value = newValue;
+            game.player1.style.top = `${newValue}%`;
+            break;
+          case 'w':
+            value = Number(game.player2.dataset.value);
+            newValue = value - game.playerMove;
+            if (newValue < 0) {
+              newValue = 0;
+            }
+            game.player2.dataset.value = newValue;
+            game.player2.style.top = `${newValue}%`;
+            break;
+          case 's':
+            value = Number(game.player2.dataset.value);
+            newValue = value + game.playerMove;
+            if (newValue > 100) {
+              newValue = 100;
+            }
+            game.player2.dataset.value = newValue;
+            game.player2.style.top = `${newValue}%`;
+            break;
+        }
+      });
+    </script>
+  </body>
+</html>
